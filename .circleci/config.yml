@@ -1,0 +1,49 @@
+version: 2
+
+jobs:
+  server:
+    working_directory: ~/repo
+    docker:
+      - image: circleci/python:3.6.8
+    steps:
+      - checkout
+      - run: sudo chown -R circleci:circleci /usr/local/bin
+      - run: sudo chown -R circleci:circleci /usr/local/lib/python3.6/site-packages
+      - run:
+          name: Install flake8, pytest
+          command: pip install flake8 pytest flask
+      - run:
+          name: Run test-flake8
+          command: |
+            echo "Run test-flake8"
+            cd server && flake8 --config flake8.cfg
+      - run:
+          name: Run pytest
+          command: |
+            echo "Run pytest"
+            cd server && pytest
+  client:
+    working_directory: ~/repo
+    docker:
+      - image: circleci/node:12-browsers
+    steps:
+      - checkout
+      - run: 
+          name: Setup Dependencies
+          command: cd client && npm install
+      - run:
+          name: "JavaScript Linter"
+          command: cd client && npm run lint
+      
+workflows:
+  version: 2
+  build_and_deploy:
+    jobs:
+      - server:
+          filters:
+            tags:
+              ignore: /.*/
+      - client:
+          filters:
+            tags:
+              ignore: /.*/
